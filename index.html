@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ro" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git & GitHub | Flux de lucru în echipă</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #020b12;
+            --bg-panel: #091a27;
+            --bg-panel-strong: #0a1b2a;
+            --line: rgba(255, 255, 255, 0.08);
+            --line-strong: rgba(255, 255, 255, 0.14);
+            --text: #edf6ff;
+            --muted: #aab8c6;
+            --lime: #d9ff30;
+            --lime-strong: #c9ff1a;
+            --dark: #040d14;
+            --code: rgba(7, 17, 23, 0.96);
+            --shadow: rgba(0, 0, 0, 0.55);
+        }
+
+        * { box-sizing: border-box; }
+
+        html {
+            scroll-behavior: smooth;
+            background: var(--bg);
+        }
+
+        body {
+            margin: 0;
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background:
+                radial-gradient(circle at 20% 10%, rgba(133, 255, 168, 0.06), transparent 15%),
+                linear-gradient(to bottom, #01070d, #020b12 40%, #01060a 100%);
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+            background-size: 26px 26px;
+            pointer-events: none;
+            mask-image: radial-gradient(circle at center, black 55%, transparent 100%);
+        }
+
+        .page-shell {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 32px 18px 80px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero {
+            padding-top: 18px;
+            padding-bottom: 28px;
+        }
+
+        .hero-shell {
+            border-top: 1px solid rgba(255,255,255,0.12);
+            border-bottom: 1px solid rgba(255,255,255,0.12);
+            background: rgba(6, 15, 22, 0.8);
+            box-shadow: inset 0 0 20px rgba(104, 123, 150, 0.06);
+            padding: 28px 20px 22px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-shell::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(90deg, rgba(217,255,48,0.03), rgba(255,255,255,0.01), rgba(217,255,48,0.03));
+            pointer-events: none;
+        }
+
+        .terminal-line,
+        .section-title,
+        .prompt,
+        .inline-command,
+        .code-box,
+        .command-box,
+        .branch-tag,
+        .steps,
+        .chip,
+        .status {
+            font-family: 'Consolas', 'Fira Code', monospace;
+        }
+
+        .terminal-line {
+            color: var(--lime);
+            font-size: 14px;
+            letter-spacing: 0.14em;
+            text-transform: lowercase;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 18px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .terminal-line::before {
+            content: "";
+            display: inline-block;
+            width: 28px;
+            height: 2px;
+            background: var(--lime);
+            border-radius: 999px;
+            box-shadow: 0 0 12px rgba(217,255,48,0.55);
+        }
+
+        h1 {
+            margin: 0;
+            font-size: clamp(3.2rem, 7vw, 8rem);
+            line-height: 0.9;
+            letter-spacing: -0.06em;
+            text-transform: uppercase;
+            font-weight: 900;
+            position: relative;
+            z-index: 1;
+        }
+
+        .slash {
+            color: var(--lime);
+            text-shadow: 0 0 18px rgba(217,255,48,0.6);
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #f4f7fb 0%, #f4f7fb 45%, #d9ff30 120%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 18px rgba(217,255,48,0.12);
+        }
+
+        h2 {
+            margin: 16px 0 0;
+            font-size: clamp(1.15rem, 2.2vw, 2.1rem);
+            font-weight: 600;
+            color: rgba(255,255,255,0.92);
+            position: relative;
+            z-index: 1;
+        }
+
+        .subtitle {
+            margin: 10px 0 0;
+            font-size: 0.96rem;
+            color: var(--muted);
+            letter-spacing: 0.06em;
+            text-transform: lowercase;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats-row {
+            margin-top: 28px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .stats-row span {
+            border-radius: 999px;
+            border: 1px solid rgba(255,255,255,0.15);
+            background: rgba(255,255,255,0.01);
+            padding: 9px 14px;
+            font-size: 0.76rem;
+            letter-spacing: 0.04em;
+            color: rgba(255,255,255,0.8);
+        }
+
+        .main-wrap {
+            padding-top: 18px;
+        }
+
+        .section-block {
+            margin-top: 40px;
+            margin-bottom: 56px;
+        }
+
+        .section-title {
+            display: inline-flex;
+            align-items: center;
+            gap: 14px;
+            color: var(--lime);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.82rem;
+            line-height: 1;
+            margin: 0 0 20px 6px;
+            font-weight: 700;
+        }
+
+        .section-title::before {
+            content: "";
+            display: inline-block;
+            width: 34px;
+            height: 2px;
+            background: var(--lime);
+            box-shadow: 0 0 10px rgba(217,255,48,0.5);
+            border-radius: 999px;
+        }
+
+        .cards-grid {
+            display: grid;
+            gap: 22px;
+        }
+
+        .two-up {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .three-up {
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+
+        .info-card,
+        .mini-card,
+        .step-content,
+        .adoption-card,
+        .command-box {
+            background: rgba(8, 18, 27, 0.92);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02), 0 8px 28px rgba(0,0,0,0.25);
+            border-radius: 20px;
+        }
+
+        .info-card {
+            padding: 28px 24px 18px;
+            min-height: 360px;
+        }
+
+        .icon-wrap {
+            width: 58px;
+            height: 58px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            box-shadow: 0 0 20px rgba(217,255,48,0.18);
+            font-size: 1.7rem;
+            color: var(--lime);
+        }
+
+        .icon-wrap.lime {
+            background: rgba(217,255,48,0.14);
+            border: 1px solid rgba(217,255,48,0.18);
+        }
+
+        .info-card h3,
+        .mini-card h3,
+        .adoption-card h3 {
+            margin: 0 0 16px;
+            font-size: clamp(1.7rem, 2.3vw, 2.4rem);
+            line-height: 1.1;
+            color: #f5f8ff;
+            letter-spacing: -0.03em;
+        }
+
+        .info-card p,
+        .mini-card p,
+        .adoption-card p,
+        .step-content p {
+            margin: 0;
+            color: rgba(229,235,245,0.82);
+            font-size: 1.02rem;
+            line-height: 1.65;
+        }
+
+        .code-box {
+            margin-top: 18px;
+            background: rgba(3, 12, 18, 0.9);
+            border: 1px solid rgba(255,255,255,0.08);
+            padding: 16px 18px;
+            border-radius: 12px;
+            color: var(--lime);
+            line-height: 1.8;
+            font-size: 0.86rem;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+        }
+
+        .muted {
+            color: rgba(255,255,255,0.72);
+        }
+
+        .chips-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 24px;
+        }
+
+        .chips-row span {
+            border: 1px solid rgba(255,255,255,0.12);
+            color: rgba(255,255,255,0.8);
+            background: rgba(255,255,255,0.02);
+            border-radius: 999px;
+            padding: 8px 12px;
+            font-size: 0.76rem;
+            letter-spacing: 0.04em;
+        }
+
+        .timeline {
+            display: grid;
+            gap: 20px;
+        }
+
+        .step-item {
+            display: grid;
+            grid-template-columns: 62px minmax(0, 1fr);
+            gap: 18px;
+            align-items: stretch;
+        }
+
+        .step-index {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--lime);
+            color: var(--dark);
+            display: grid;
+            place-items: center;
+            font-weight: 800;
+            font-size: 1.4rem;
+            box-shadow: 0 0 18px rgba(217,255,48,0.24);
+            margin-top: 10px;
+        }
+
+        .step-content {
+            position: relative;
+            padding: 22px 24px 22px 22px;
+            min-height: 150px;
+        }
+
+        .step-content::before {
+            content: "";
+            position: absolute;
+            left: -15px;
+            top: 26px;
+            width: 3px;
+            height: calc(100% - 40px);
+            background: linear-gradient(180deg, rgba(217,255,48,0.0), rgba(217,255,48,0.9), rgba(217,255,48,0.0));
+            opacity: 0.4;
+        }
+
+        .step-head {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .step-icon {
+            width: 38px;
+            height: 38px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            background: rgba(217,255,48,0.12);
+            border: 1px solid rgba(217,255,48,0.18);
+            color: var(--lime);
+        }
+
+        .step-head h4 {
+            margin: 0;
+            font-size: clamp(1.2rem, 2vw, 1.8rem);
+            line-height: 1.2;
+            color: #f4f7fd;
+        }
+
+        .inline-command {
+            margin-top: 16px;
+            display: inline-block;
+            background: rgba(0,0,0,0.14);
+            border: 1px solid rgba(255,255,255,0.06);
+            color: var(--lime);
+            padding: 11px 14px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+        }
+
+        .branch-bar {
+            position: relative;
+            margin-top: 18px;
+            width: 100%;
+            height: 52px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.14);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 12px;
+            overflow: hidden;
+        }
+
+        .track {
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            height: 2px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 10px;
+        }
+
+        .branch-dot {
+            position: relative;
+            z-index: 1;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.25);
+            border: 2px solid rgba(255,255,255,0.15);
+            box-shadow: 0 0 12px rgba(255,255,255,0.12);
+        }
+
+        .branch-dot.active {
+            background: var(--lime);
+            border-color: rgba(217,255,48,0.7);
+            box-shadow: 0 0 16px rgba(217,255,48,0.8);
+        }
+
+        .branch-tag {
+            position: absolute;
+            top: 12px;
+            font-size: 0.68rem;
+            color: rgba(255,255,255,0.72);
+            letter-spacing: 0.04em;
+            border-radius: 999px;
+            padding: 3px 7px;
+        }
+
+        .branch-tag.main { right: 12px; }
+        .branch-tag.feature { left: 12px; }
+
+        .mini-card {
+            padding: 26px 22px 18px;
+            min-height: 240px;
+        }
+
+        .mini-icon {
+            width: 48px;
+            height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 12px;
+            font-size: 1.5rem;
+            margin-bottom: 18px;
+            background: rgba(217,255,48,0.12);
+            border: 1px solid rgba(217,255,48,0.14);
+            box-shadow: 0 0 18px rgba(217,255,48,0.12);
+        }
+
+        .mini-card h3 {
+            font-size: clamp(1.45rem, 2vw, 2rem);
+        }
+
+        .mini-bar {
+            display: block;
+            width: 80px;
+            height: 4px;
+            background: var(--lime);
+            border-radius: 999px;
+            margin-top: 20px;
+            box-shadow: 0 0 16px rgba(217,255,48,0.5);
+        }
+
+        .command-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .command-box {
+            padding: 18px 16px;
+        }
+
+        .prompt-row {
+            color: var(--lime);
+            font-size: 0.95rem;
+            margin-bottom: 8px;
+        }
+
+        .command-box p {
+            margin: 0;
+            color: rgba(255,255,255,0.72);
+            font-size: 0.94rem;
+        }
+
+        .adoption-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 22px;
+        }
+
+        .adoption-card {
+            padding: 22px 20px;
+            min-height: 160px;
+        }
+
+        .adoption-card h3 {
+            font-size: clamp(1.6rem, 2vw, 2.1rem);
+        }
+
+        @media (max-width: 980px) {
+            .two-up,
+            .three-up,
+            .command-grid,
+            .adoption-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .page-shell {
+                padding-left: 14px;
+                padding-right: 14px;
+            }
+
+            .hero-shell {
+                padding-left: 12px;
+                padding-right: 12px;
+            }
+
+            .step-item {
+                grid-template-columns: 1fr;
+            }
+
+            .step-index {
+                margin-top: 0;
+            }
+
+            .stats-row {
+                gap: 8px;
+            }
+
+            .stats-row span {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-lime-300 selection:text-slate-900">
+
+    <div class="page-shell">
+        <header class="hero">
+            <div class="hero-shell">
+                <div class="terminal-line">$ git init echipa-mea-de-succes</div>
+                <h1>
+                    GIT <span class="slash">/</span> <span class="gradient-text">GITHUB</span>
+                </h1>
+                <h2>Importanța utilizării aplicațiilor de lucru în echipă</h2>
+                <p class="subtitle">Lucrul la un proiect comun</p>
+
+                <div class="stats-row">
+                    <span>◉ 10B+ dezvoltatori</span>
+                    <span>◉ 420M+ repository-uri</span>
+                    <span>◉ Adoptați de 98% din Fortune 100</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-wrap">
+            <section class="section-block">
+                <div class="section-title">01 - FUNDAMENTE</div>
+
+                <div class="cards-grid two-up">
+                    <article class="info-card">
+                        <div class="icon-wrap lime"><span>⛭</span></div>
+                        <h3>Ce este GIT?</h3>
+                        <p>
+                            Git este un sistem distribuit de control al versiunilor, creat de Linus
+                            Torvalds în 2005. Urmărește necesitatea modificărilor din codul sursă,
+                            permițând colaborarea simultană a mai multor dezvoltatori fără conflicte
+                            neîntâlnite.
+                        </p>
+                        <div class="code-box">
+                            <span class="prompt">$</span>
+                            <span>git log --oneline</span>
+                            <br>
+                            <span class="muted">a3f8c2f feat: adăugă autentificare</span>
+                            <br>
+                            <span class="muted">b7e1d9f fix: rezolvă bug-ul din login</span>
+                            <br>
+                            <span class="muted">c2a945d docs: actualizează README</span>
+                        </div>
+                    </article>
+
+                    <article class="info-card">
+                        <div class="icon-wrap lime"><span>⟳</span></div>
+                        <h3>Ce este GitHub?</h3>
+                        <p>
+                            GitHub este o platformă cloud de găzduire a repository-urilor Git, cu
+                            funcționalități avansate de colaborare: pull requests, code review, issues,
+                            Actions CI/CD și o rețea socială pentru dezvoltatori.
+                        </p>
+                        <div class="chips-row">
+                            <span>Pull Requests</span>
+                            <span>Issues</span>
+                            <span>Actions</span>
+                            <span>Wiki</span>
+                            <span>Projects</span>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section class="section-block workflow">
+                <div class="section-title">02 - FLUXUL DE LUCRU ÎN ECHIPĂ</div>
+
+                <div class="timeline">
+                    <div class="step-item">
+                        <div class="step-index">1</div>
+                        <div class="step-content">
+                            <div class="step-head">
+                                <div class="step-icon">🍴</div>
+                                <h4>Fork &amp; Clone</h4>
+                            </div>
+                            <p>
+                                Fiecare membru al echipei creează o copie locală a repository-ului.
+                                Modificările personale au efectul asupra codului principal până la aprobarea.
+                            </p>
+                            <div class="inline-command">git clone https://github.com/org/project.git</div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-index">2</div>
+                        <div class="step-content">
+                            <div class="step-head">
+                                <div class="step-icon">🌿</div>
+                                <h4>Branch – Izolarea Funcționalităților</h4>
+                            </div>
+                            <p>
+                                Fiecare feature sau bugfix se dezvoltă pe un branch separat. Astfel, ramura principală
+                                rămâne stabilă și funcțională în permanență.
+                            </p>
+                            <div class="branch-bar">
+                                <span class="branch-dot active"></span>
+                                <span class="track"></span>
+                                <span class="branch-dot"></span>
+                                <span class="branch-tag main">main</span>
+                                <span class="branch-tag feature">feature/login</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-index">3</div>
+                        <div class="step-content">
+                            <div class="step-head">
+                                <div class="step-icon">💬</div>
+                                <h4>Pull Request &amp; Code Review</h4>
+                            </div>
+                            <p>
+                                Modificările propuse sunt revizuite de colegi înainte de integrare. Procesul de code review
+                                îmbunătățește calitatea codului și transferă cunoștințe în echipă.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="step-item">
+                        <div class="step-index">4</div>
+                        <div class="step-content">
+                            <div class="step-head">
+                                <div class="step-icon">🧩</div>
+                                <h4>Merge &amp; Deploy</h4>
+                            </div>
+                            <p>
+                                După aprobare, codul este integrat în ramura principală. GitHub Actions poate declanșa automat
+                                teste și deployment-ul în producție.
+                            </p>
+                            <div class="inline-command">git merge feature/login --no-ff</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-block importance">
+                <div class="section-title">03 - DE CE CONTEAZĂ</div>
+
+                <div class="cards-grid three-up">
+                    <article class="mini-card">
+                        <div class="mini-icon lime">🔒</div>
+                        <h3>Siguranța Codului</h3>
+                        <p>
+                            Nicio modificare nu se pierde. Istoricul complet al proiectului permite
+                            revenirea la o versiune anterioară în câteva secunde.
+                        </p>
+                        <span class="mini-bar"></span>
+                    </article>
+
+                    <article class="mini-card">
+                        <div class="mini-icon lime">⚡</div>
+                        <h3>Productivitate sporită</h3>
+                        <p>
+                            Zeci de dezvoltatori pot lucra simultan pe acelasi proiect, fiecare lucru
+                            fiind izolată și integrată în mod structurat.
+                        </p>
+                        <span class="mini-bar"></span>
+                    </article>
+
+                    <article class="mini-card">
+                        <div class="mini-icon lime">👁</div>
+                        <h3>Transparență totală</h3>
+                        <p>
+                            Fiecare commit, issue și modificare este urmărită și accesibilă tuturor
+                            membrilor echipei.
+                        </p>
+                        <span class="mini-bar"></span>
+                    </article>
+                </div>
+            </section>
+
+            <section class="section-block commands">
+                <div class="section-title">04 - COMENZI ESENȚIALE</div>
+
+                <div class="command-grid">
+                    <div class="command-box">
+                        <div class="prompt-row"><span class="prompt">$</span> git init</div>
+                        <p>Inițializează un repository nou.</p>
+                    </div>
+                    <div class="command-box">
+                        <div class="prompt-row"><span class="prompt">$</span> git clone &lt;url&gt;</div>
+                        <p>Copiază un repository existent.</p>
+                    </div>
+                    <div class="command-box">
+                        <div class="prompt-row"><span class="prompt">$</span> git branch feature/x</div>
+                        <p>Crează un nou branch.</p>
+                    </div>
+                    <div class="command-box">
+                        <div class="prompt-row"><span class="prompt">$</span> git add .</div>
+                        <p>Adaugă toate modificările în staging.</p>
+                    </div>
+                    <div class="command-box">
+                        <div class="prompt-row"><span class="prompt">$</span> git push origin feature/x</div>
+                        <p>Trimite modificările pe server.</p>
+                    </div>
+                    <div class="command-box">
+                        <div class="prompt-row"><span class="prompt">$</span> git log --oneline</div>
+                        <p>Vizualizează istoricul Git.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section-block adoption">
+                <div class="section-title">05 - ADOPTIE GLOBALĂ</div>
+
+                <div class="adoption-grid">
+                    <article class="adoption-card">
+                        <h3>Utilizare în industrie</h3>
+                        <p>
+                            Git și GitHub sunt standardul pentru dezvoltarea software modernă, folosite de
+                            startup-uri, companii mari și echipe distribuite.
+                        </p>
+                    </article>
+                    <article class="adoption-card">
+                        <h3>Impactul Code Review</h3>
+                        <p>
+                            Revizuirea codului reduce erorile, îmbunătățește calitatea și ajută echipele să
+                            învețe și să progreseze împreună.
+                        </p>
+                    </article>
+                </div>
+            </section>
+        </main>
+    </div>
+
+</body>
+</html>
